@@ -40,14 +40,17 @@ export function Thumbnail() {
       </div>
       <div style={{ padding: "50px 56px 0", color: "#111" }}>
         <div style={{ fontSize: 120, fontWeight: 900, letterSpacing: -4.5, lineHeight: 1.16 }}>
-          UI 코드 안 짜고
+          iOS 서버 드리븐 UI
           <br />
-          iOS 화면 만들기
+          이제 공짜
           <span style={{ fontSize: 72, color: theme.accent, marginLeft: 24, letterSpacing: 0 }}>{"{ }"}</span>
         </div>
-        <div style={{ marginTop: 24, fontSize: 70, fontWeight: 800, color: "#a3a8ad", letterSpacing: -1.5 }}>
-          A2UI: Agent to User Interface
+        <div style={{ marginTop: 24, fontSize: 66, fontWeight: 800, color: "#a3a8ad", letterSpacing: -1.5 }}>
+          앱 배포 없이 화면 바꾸기
         </div>
+      </div>
+      <div style={{ position: "absolute", right: 44, bottom: 30, fontSize: 34, fontWeight: 700, color: "#6b7177", letterSpacing: -0.5 }}>
+        feat. A2UI
       </div>
     </AbsoluteFill>
   );
