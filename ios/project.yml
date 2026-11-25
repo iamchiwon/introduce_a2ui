@@ -1,0 +1,44 @@
+name: A2UIRenderer
+options:
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  A2UI:
+    path: ../vendor/a2ui
+targets:
+  A2UIRenderer:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - path: ../fixtures
+        type: folder
+        buildPhase: resources
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: dev.a2ui.renderer
+      GENERATE_INFOPLIST_FILE: YES
+      INFOPLIST_KEY_UILaunchScreen_Generation: YES
+      SWIFT_VERSION: "6.0"
+    dependencies:
+      - package: A2UI
+        product: A2UISwiftCore
+      - package: A2UI
+        product: A2UISwiftUI
+      - package: A2UI
+        product: BasicCatalogSwiftUI
+  A2UIRendererUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: A2UIRenderer
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      SWIFT_VERSION: "6.0"
+schemes:
+  A2UIRenderer:
+    build:
+      targets:
+        A2UIRenderer: all
+    test:
+      targets: [A2UIRendererUITests]
