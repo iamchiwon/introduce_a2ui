@@ -20,6 +20,7 @@ import {
   type SceneProps,
 } from "./timing";
 import { theme } from "./theme";
+import { Thumbnail } from "./Thumbnail";
 import S00 from "./scenes/S00";
 import S01 from "./scenes/S01";
 import S02 from "./scenes/S02";
@@ -127,6 +128,7 @@ export function Root() {
           calculateMetadata={metadata}
         />
       ))}
+      <Composition id="Thumbnail" component={Thumbnail} width={1280} height={720} fps={30} durationInFrames={1} />
       <Composition
         id="Components"
         component={Demo}
