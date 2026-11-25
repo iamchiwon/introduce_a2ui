@@ -64,7 +64,9 @@ A2UI 문서: https://a2ui.org
 
 A2UI, Agent to User Interface, SwiftUI, iOS 개발, Xcode, 바이브코딩, vibe coding, 서버 드리븐 UI, Server Driven UI, 생성형 UI, Generative UI, AI 에이전트, 곰튀김
 
-## English (영어 제목·설명)
+## English (영어 제목·설명·썸네일)
+
+썸네일: [thumbnail/thumbnail.en.png](thumbnail/thumbnail.en.png) (재생목록 띠는 영어 "Tricks make wisdom"을 크게, 한국어를 작게)
 
 제목:
 
@@ -115,6 +117,7 @@ Example code from this video: https://github.com/iamchiwon/introduce_a2ui
 2. **한국어 자막**: 왼쪽 메뉴 **자막** → 한국어 행의 자막 "추가" → **파일 업로드 → 타이밍 포함** → `video/out/introduce_a2ui.ko.srt`
 3. **영어 자막**: 같은 화면에서 **언어 추가 → 영어** → 자막 "추가" → 파일 업로드(타이밍 포함) → `video/out/introduce_a2ui.en.srt` → 게시
 4. **영어 제목·설명**: 영어 행의 **제목 및 설명** 열에서 "추가" → 위 English 섹션의 제목과 설명을 붙여 넣고 게시. 해외 시청자에게는 이 제목·설명이 보인다.
+5. **영어 썸네일**: Studio에서 언어별 썸네일을 넣는 메뉴(영상의 **언어** 페이지 등)가 채널에 열려 있으면 영어에 `docs/thumbnail/thumbnail.en.png`를 지정한다. 메뉴가 없으면 썸네일은 하나만 쓸 수 있으므로 한국어판을 기본으로 둔다.
 
 영어 자막을 다시 만들 때는 `node video/scripts/srt-translate.mjs en`을 실행한다. 번역문은 `docs/narration.en.json`에 있고, 대본(narration.md)이 바뀌어 원문과 다르면 스크립트가 실패하며 해당 문장 ID를 알려준다. 다른 언어는 같은 형식으로 `docs/narration.<언어>.json`을 만들고 `srt-translate.mjs <언어>`를 실행한다.
 

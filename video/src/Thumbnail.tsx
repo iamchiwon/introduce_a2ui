@@ -12,7 +12,29 @@ const Bulb = () => (
   </svg>
 );
 
-export function Thumbnail() {
+const copy = {
+  ko: { lines: ["iOS 서버 드리븐 UI", "이제 공짜"], sub: "앱 배포 없이 화면 바꾸기", titleSize: 120, subSize: 66 },
+  en: { lines: ["Server-Driven UI", "for iOS, Now Free"], sub: "No app update needed", titleSize: 106, subSize: 64 },
+};
+
+const KoSeries = () => (
+  <>
+    <b style={{ fontWeight: 900 }}>잔머리</b>
+    <span style={{ fontWeight: 400, opacity: 0.85 }}>는 삶의 </span>
+    <b style={{ fontWeight: 900 }}>지혜</b>
+  </>
+);
+const EnSeries = () => (
+  <>
+    <span style={{ fontWeight: 800 }}>Tricks</span>
+    <span style={{ fontWeight: 300, opacity: 0.85 }}> make </span>
+    <span style={{ fontWeight: 800 }}>wisdom</span>
+  </>
+);
+
+// lang=en 이면 재생목록 이름의 영어·한국어 위치를 바꾸고 본문을 영어로 쓴다
+export function Thumbnail({ lang = "ko" }: { lang?: "ko" | "en" }) {
+  const c = copy[lang];
   return (
     <AbsoluteFill style={{ backgroundColor: "#fff", fontFamily: theme.sans }}>
       <div
@@ -29,25 +51,21 @@ export function Thumbnail() {
         <Bulb />
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 82, letterSpacing: -2, lineHeight: 1.05 }}>
-            <b style={{ fontWeight: 900 }}>잔머리</b>
-            <span style={{ fontWeight: 400, opacity: 0.85 }}>는 삶의 </span>
-            <b style={{ fontWeight: 900 }}>지혜</b>
+            {lang === "ko" ? <KoSeries /> : <EnSeries />}
           </div>
           <div style={{ fontSize: 42, marginTop: 10, letterSpacing: -0.5 }}>
-            <span style={{ fontWeight: 700 }}>Tricks</span>
-            <span style={{ fontWeight: 300, opacity: 0.85 }}> make </span>
-            <span style={{ fontWeight: 700 }}>wisdom</span>
+            {lang === "ko" ? <EnSeries /> : <KoSeries />}
           </div>
         </div>
       </div>
       <div style={{ padding: "50px 56px 0", color: "#111" }}>
-        <div style={{ fontSize: 120, fontWeight: 900, letterSpacing: -4.5, lineHeight: 1.16 }}>
-          iOS 서버 드리븐 UI
+        <div style={{ fontSize: c.titleSize, fontWeight: 900, letterSpacing: lang === "ko" ? -4.5 : -3, lineHeight: 1.16 }}>
+          {c.lines[0]}
           <br />
-          이제 공짜
+          {c.lines[1]}
         </div>
-        <div style={{ marginTop: 24, fontSize: 66, fontWeight: 800, color: "#a3a8ad", letterSpacing: -1.5 }}>
-          앱 배포 없이 화면 바꾸기
+        <div style={{ marginTop: 24, fontSize: c.subSize, fontWeight: 800, color: "#a3a8ad", letterSpacing: -1.5 }}>
+          {c.sub}
         </div>
       </div>
       {/* 오른쪽 아래는 유튜브 재생시간 표시에 가려지므로 로고 밑에 둔다 */}

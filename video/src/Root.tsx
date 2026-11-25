@@ -129,6 +129,7 @@ export function Root() {
         />
       ))}
       <Composition id="Thumbnail" component={Thumbnail} width={1280} height={720} fps={30} durationInFrames={1} />
+      <Composition id="ThumbnailEn" component={Thumbnail} defaultProps={{ lang: "en" as const }} width={1280} height={720} fps={30} durationInFrames={1} />
       <Composition
         id="Components"
         component={Demo}
