@@ -1,0 +1,27 @@
+{
+  "name": "tui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "tsx test.tsx",
+    "start": "tsx src/main.tsx"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@a2ui/react": "^0.16.1",
+    "@a2ui/web_core": "^0.16.1",
+    "ink": "^8.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.1",
+    "ink-testing-library": "^4.0.0",
+    "tsx": "^4.23.15"
+  }
+}
