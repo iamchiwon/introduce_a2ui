@@ -1,0 +1,56 @@
+{
+  "scenes": {
+    "S00": {
+      "title": "오프닝",
+      "minSec": 14
+    },
+    "S01": {
+      "title": "A2UI가 뭔가",
+      "minSec": 18
+    },
+    "S02": {
+      "title": "기획",
+      "minSec": 12
+    },
+    "S03": {
+      "title": "Xcode 새 프로젝트 만들기",
+      "minSec": 9
+    },
+    "S04": {
+      "title": "A2UI 패키지 추가",
+      "minSec": 12
+    },
+    "S05": {
+      "title": "바이브코딩 1: 골프 예약 JSON",
+      "minSec": 18
+    },
+    "S06": {
+      "title": "바이브코딩 2: JSON을 그리는 앱 코드",
+      "minSec": 18
+    },
+    "S07": {
+      "title": "빌드하고 고치기",
+      "minSec": 6
+    },
+    "S08": {
+      "title": "동작 확인",
+      "minSec": 20
+    },
+    "S09": {
+      "title": "나머지 3개 화면은 JSON만",
+      "minSec": 17
+    },
+    "S10": {
+      "title": "서버 드리븐 UI로 쓰기",
+      "minSec": 17
+    },
+    "S11": {
+      "title": "한계와 커스텀",
+      "minSec": 14
+    },
+    "S12": {
+      "title": "마무리",
+      "minSec": 10
+    }
+  }
+}
