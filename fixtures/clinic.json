@@ -1,0 +1,284 @@
+{
+  "name": "진료 예약",
+  "description": "병원 진료 예약",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "clinic",
+        "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+        "sendDataModel": true,
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "child": "col"
+          },
+          {
+            "id": "col",
+            "component": "Column",
+            "align": "stretch",
+            "children": [
+              "title",
+              "dept",
+              "doctor",
+              "when",
+              "patient",
+              "phone",
+              "symptom",
+              "agree",
+              "submit"
+            ]
+          },
+          {
+            "id": "title",
+            "component": "Text",
+            "text": "## 🏥 진료 예약"
+          },
+          {
+            "id": "dept",
+            "component": "ChoicePicker",
+            "label": "진료과",
+            "options": [
+              {
+                "value": "im",
+                "label": "내과"
+              },
+              {
+                "value": "os",
+                "label": "정형외과"
+              },
+              {
+                "value": "derm",
+                "label": "피부과"
+              },
+              {
+                "value": "ent",
+                "label": "이비인후과"
+              }
+            ],
+            "value": {
+              "@path": "/dept"
+            },
+            "displayStyle": "chips",
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/dept"
+                    }
+                  }
+                },
+                "message": "진료과를 선택하세요."
+              }
+            ]
+          },
+          {
+            "id": "doctor",
+            "component": "ChoicePicker",
+            "label": "담당의",
+            "options": [
+              {
+                "value": "kim",
+                "label": "김민준 전문의"
+              },
+              {
+                "value": "lee",
+                "label": "이서연 전문의"
+              },
+              {
+                "value": "any",
+                "label": "상관없음"
+              }
+            ],
+            "value": {
+              "@path": "/doctor"
+            }
+          },
+          {
+            "id": "when",
+            "component": "Row",
+            "children": [
+              "date",
+              "time"
+            ]
+          },
+          {
+            "id": "date",
+            "component": "DateTimeInput",
+            "label": "날짜",
+            "value": {
+              "@path": "/date"
+            },
+            "enableDate": true,
+            "min": "2026-11-26",
+            "weight": 1
+          },
+          {
+            "id": "time",
+            "component": "DateTimeInput",
+            "label": "시간",
+            "value": {
+              "@path": "/time"
+            },
+            "enableTime": true,
+            "weight": 1
+          },
+          {
+            "id": "patient",
+            "component": "TextField",
+            "label": "환자 이름",
+            "value": {
+              "@path": "/patient"
+            },
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/patient"
+                    }
+                  }
+                },
+                "message": "이름을 입력하세요."
+              }
+            ]
+          },
+          {
+            "id": "phone",
+            "component": "TextField",
+            "label": "연락처",
+            "value": {
+              "@path": "/phone"
+            },
+            "placeholder": "010-0000-0000",
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "regex",
+                  "args": {
+                    "value": {
+                      "@path": "/phone"
+                    },
+                    "pattern": "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$"
+                  }
+                },
+                "message": "휴대폰 번호 형식이 아닙니다."
+              }
+            ]
+          },
+          {
+            "id": "symptom",
+            "component": "TextField",
+            "label": "증상",
+            "value": {
+              "@path": "/symptom"
+            },
+            "variant": "longText",
+            "placeholder": "증상을 간단히 적어주세요"
+          },
+          {
+            "id": "agree",
+            "component": "CheckBox",
+            "label": "개인정보 수집·이용에 동의합니다",
+            "value": {
+              "@path": "/agree"
+            },
+            "@checks": [
+              {
+                "condition": {
+                  "@path": "/agree"
+                },
+                "message": "동의가 필요합니다."
+              }
+            ]
+          },
+          {
+            "id": "submit",
+            "component": "Button",
+            "child": "submit_label",
+            "variant": "primary",
+            "action": {
+              "event": {
+                "name": "clinic_submit",
+                "context": {
+                  "dept": {
+                    "@path": "/dept"
+                  },
+                  "doctor": {
+                    "@path": "/doctor"
+                  },
+                  "date": {
+                    "@path": "/date"
+                  },
+                  "time": {
+                    "@path": "/time"
+                  },
+                  "patient": {
+                    "@path": "/patient"
+                  },
+                  "phone": {
+                    "@path": "/phone"
+                  },
+                  "symptom": {
+                    "@path": "/symptom"
+                  }
+                }
+              }
+            },
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/dept"
+                    }
+                  }
+                },
+                "message": "진료과를 선택하세요."
+              },
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/patient"
+                    }
+                  }
+                },
+                "message": "이름을 입력하세요."
+              },
+              {
+                "condition": {
+                  "@path": "/agree"
+                },
+                "message": "동의가 필요합니다."
+              }
+            ]
+          },
+          {
+            "id": "submit_label",
+            "component": "Text",
+            "text": "예약 신청"
+          }
+        ],
+        "dataModel": {
+          "dept": [],
+          "doctor": [
+            "any"
+          ],
+          "date": "2026-11-27",
+          "time": "09:30",
+          "patient": "",
+          "phone": "",
+          "symptom": "",
+          "agree": false
+        }
+      }
+    }
+  ]
+}

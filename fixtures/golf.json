@@ -1,0 +1,251 @@
+{
+  "name": "골프 예약",
+  "description": "골프장 티타임 예약",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "golf",
+        "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+        "sendDataModel": true,
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "child": "col"
+          },
+          {
+            "id": "col",
+            "component": "Column",
+            "align": "stretch",
+            "children": [
+              "title",
+              "course",
+              "date",
+              "tee",
+              "players",
+              "opts",
+              "request",
+              "divider",
+              "summary",
+              "submit"
+            ]
+          },
+          {
+            "id": "title",
+            "component": "Text",
+            "text": "## ⛳ 골프 예약"
+          },
+          {
+            "id": "course",
+            "component": "ChoicePicker",
+            "label": "골프장",
+            "options": [
+              {
+                "value": "skyhill",
+                "label": "스카이힐 CC"
+              },
+              {
+                "value": "lakeside",
+                "label": "레이크사이드 CC"
+              },
+              {
+                "value": "pine",
+                "label": "파인밸리 GC"
+              }
+            ],
+            "value": {
+              "@path": "/course"
+            },
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/course"
+                    }
+                  }
+                },
+                "message": "골프장을 선택하세요."
+              }
+            ]
+          },
+          {
+            "id": "date",
+            "component": "DateTimeInput",
+            "label": "라운드 날짜",
+            "value": {
+              "@path": "/date"
+            },
+            "enableDate": true,
+            "min": "2026-11-26",
+            "max": "2027-02-28"
+          },
+          {
+            "id": "tee",
+            "component": "ChoicePicker",
+            "label": "티타임",
+            "options": [
+              {
+                "value": "06:30",
+                "label": "06:30"
+              },
+              {
+                "value": "07:10",
+                "label": "07:10"
+              },
+              {
+                "value": "08:00",
+                "label": "08:00"
+              },
+              {
+                "value": "12:40",
+                "label": "12:40"
+              },
+              {
+                "value": "13:20",
+                "label": "13:20"
+              }
+            ],
+            "value": {
+              "@path": "/teeTime"
+            },
+            "displayStyle": "chips"
+          },
+          {
+            "id": "players",
+            "component": "Slider",
+            "label": "인원",
+            "min": 1,
+            "max": 4,
+            "steps": 3,
+            "value": {
+              "@path": "/players"
+            }
+          },
+          {
+            "id": "opts",
+            "component": "Row",
+            "children": [
+              "cart",
+              "caddie"
+            ]
+          },
+          {
+            "id": "cart",
+            "component": "CheckBox",
+            "label": "카트 사용",
+            "value": {
+              "@path": "/cart"
+            }
+          },
+          {
+            "id": "caddie",
+            "component": "CheckBox",
+            "label": "캐디 동반",
+            "value": {
+              "@path": "/caddie"
+            }
+          },
+          {
+            "id": "request",
+            "component": "TextField",
+            "label": "요청사항",
+            "value": {
+              "@path": "/request"
+            },
+            "placeholder": "예: 클럽 대여"
+          },
+          {
+            "id": "divider",
+            "component": "Divider"
+          },
+          {
+            "id": "summary",
+            "component": "Text",
+            "text": {
+              "@call": "formatString",
+              "args": {
+                "value": "${/date} ${/teeTime} · ${/players}명"
+              }
+            },
+            "variant": "caption"
+          },
+          {
+            "id": "submit",
+            "component": "Button",
+            "child": "submit_label",
+            "variant": "primary",
+            "action": {
+              "event": {
+                "name": "golf_submit",
+                "context": {
+                  "course": {
+                    "@path": "/course"
+                  },
+                  "date": {
+                    "@path": "/date"
+                  },
+                  "teeTime": {
+                    "@path": "/teeTime"
+                  },
+                  "players": {
+                    "@path": "/players"
+                  },
+                  "cart": {
+                    "@path": "/cart"
+                  },
+                  "caddie": {
+                    "@path": "/caddie"
+                  },
+                  "request": {
+                    "@path": "/request"
+                  }
+                }
+              }
+            },
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/course"
+                    }
+                  }
+                },
+                "message": "골프장을 선택하세요."
+              },
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/teeTime"
+                    }
+                  }
+                },
+                "message": "티타임을 선택하세요."
+              }
+            ]
+          },
+          {
+            "id": "submit_label",
+            "component": "Text",
+            "text": "예약하기"
+          }
+        ],
+        "dataModel": {
+          "course": [],
+          "date": "2026-12-06",
+          "teeTime": [],
+          "players": 4,
+          "cart": true,
+          "caddie": true,
+          "request": ""
+        }
+      }
+    }
+  ]
+}

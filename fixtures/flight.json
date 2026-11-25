@@ -1,0 +1,275 @@
+{
+  "name": "항공권 예약",
+  "description": "항공권 검색/예약",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "flight",
+        "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+        "sendDataModel": true,
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "child": "col"
+          },
+          {
+            "id": "col",
+            "component": "Column",
+            "align": "stretch",
+            "children": [
+              "title",
+              "trip",
+              "route",
+              "dates",
+              "pax",
+              "cabin",
+              "summary",
+              "submit"
+            ]
+          },
+          {
+            "id": "title",
+            "component": "Text",
+            "text": "## ✈️ 항공권 예약"
+          },
+          {
+            "id": "trip",
+            "component": "ChoicePicker",
+            "label": "여정",
+            "options": [
+              {
+                "value": "round",
+                "label": "왕복"
+              },
+              {
+                "value": "oneway",
+                "label": "편도"
+              }
+            ],
+            "value": {
+              "@path": "/trip"
+            },
+            "displayStyle": "chips"
+          },
+          {
+            "id": "route",
+            "component": "Row",
+            "align": "end",
+            "children": [
+              "from",
+              "arrow",
+              "to"
+            ]
+          },
+          {
+            "id": "from",
+            "component": "TextField",
+            "label": "출발",
+            "value": {
+              "@path": "/from"
+            },
+            "placeholder": "ICN",
+            "weight": 1,
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/from"
+                    }
+                  }
+                },
+                "message": "출발지를 입력하세요."
+              }
+            ]
+          },
+          {
+            "id": "arrow",
+            "component": "Text",
+            "text": "→"
+          },
+          {
+            "id": "to",
+            "component": "TextField",
+            "label": "도착",
+            "value": {
+              "@path": "/to"
+            },
+            "placeholder": "NRT",
+            "weight": 1,
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/to"
+                    }
+                  }
+                },
+                "message": "도착지를 입력하세요."
+              }
+            ]
+          },
+          {
+            "id": "dates",
+            "component": "Row",
+            "children": [
+              "depart",
+              "return"
+            ]
+          },
+          {
+            "id": "depart",
+            "component": "DateTimeInput",
+            "label": "가는 날",
+            "value": {
+              "@path": "/depart"
+            },
+            "enableDate": true,
+            "min": "2026-11-26",
+            "weight": 1
+          },
+          {
+            "id": "return",
+            "component": "DateTimeInput",
+            "label": "오는 날",
+            "value": {
+              "@path": "/return"
+            },
+            "enableDate": true,
+            "min": "2026-11-26",
+            "weight": 1
+          },
+          {
+            "id": "pax",
+            "component": "Slider",
+            "label": "승객 수",
+            "min": 1,
+            "max": 9,
+            "steps": 8,
+            "value": {
+              "@path": "/passengers"
+            }
+          },
+          {
+            "id": "cabin",
+            "component": "ChoicePicker",
+            "label": "좌석 등급",
+            "options": [
+              {
+                "value": "economy",
+                "label": "일반석"
+              },
+              {
+                "value": "premium",
+                "label": "프리미엄 일반석"
+              },
+              {
+                "value": "business",
+                "label": "비즈니스"
+              },
+              {
+                "value": "first",
+                "label": "일등석"
+              }
+            ],
+            "value": {
+              "@path": "/cabin"
+            }
+          },
+          {
+            "id": "summary",
+            "component": "Text",
+            "text": {
+              "@call": "formatString",
+              "args": {
+                "value": "${/from} → ${/to} · ${/depart} ~ ${/return} · ${/passengers}명"
+              }
+            },
+            "variant": "caption"
+          },
+          {
+            "id": "submit",
+            "component": "Button",
+            "child": "submit_label",
+            "variant": "primary",
+            "action": {
+              "event": {
+                "name": "flight_search",
+                "context": {
+                  "trip": {
+                    "@path": "/trip"
+                  },
+                  "from": {
+                    "@path": "/from"
+                  },
+                  "to": {
+                    "@path": "/to"
+                  },
+                  "depart": {
+                    "@path": "/depart"
+                  },
+                  "return": {
+                    "@path": "/return"
+                  },
+                  "passengers": {
+                    "@path": "/passengers"
+                  },
+                  "cabin": {
+                    "@path": "/cabin"
+                  }
+                }
+              }
+            },
+            "@checks": [
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/from"
+                    }
+                  }
+                },
+                "message": "출발지를 입력하세요."
+              },
+              {
+                "condition": {
+                  "@call": "required",
+                  "args": {
+                    "value": {
+                      "@path": "/to"
+                    }
+                  }
+                },
+                "message": "도착지를 입력하세요."
+              }
+            ]
+          },
+          {
+            "id": "submit_label",
+            "component": "Text",
+            "text": "항공편 검색"
+          }
+        ],
+        "dataModel": {
+          "trip": [
+            "round"
+          ],
+          "from": "ICN",
+          "to": "",
+          "depart": "2026-12-20",
+          "return": "2026-12-27",
+          "passengers": 1,
+          "cabin": [
+            "economy"
+          ]
+        }
+      }
+    }
+  ]
+}
