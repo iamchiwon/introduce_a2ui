@@ -15,3 +15,13 @@ video/public/audio/
 video/public/footage/
 video/out/
 out/
+
+# generated video/audio anywhere
+*.mp4
+*.mov
+*.m4v
+*.webm
+*.mp3
+*.wav
+*.m4a
+*.aac
