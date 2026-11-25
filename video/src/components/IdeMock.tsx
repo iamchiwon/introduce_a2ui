@@ -39,7 +39,7 @@ export function IdeMock({
           style={{
             background: theme.canvas,
             padding: 16,
-            fontFamily: theme.mono,
+            fontFamily: theme.sans,
             fontSize: 22,
           }}
         >
@@ -61,7 +61,7 @@ export function IdeMock({
             style={{
               padding: "14px 28px",
               borderBottom: "1px solid " + theme.edge,
-              font: "21px " + theme.mono,
+            font: "21px " + theme.sans,
               color: theme.accent,
             }}
           >

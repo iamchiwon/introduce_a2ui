@@ -10,10 +10,9 @@ import type { SceneProps } from "../timing";
 const bookings = [schedule.name, golf.name, clinic.name, flight.name];
 const checks = ["입력 → 요약 갱신", "필수값 누락 → 경고 · 버튼 비활성", "제출 → 입력값 JSON"];
 
-export default function S02({ sentenceFrame, wordFrame }: SceneProps) {
+export default function S02({ sentenceFrame }: SceneProps) {
   const frame = useCurrentFrame();
   const note = sentenceFrame(1);
-  const names = wordFrame("네", 2);
   const checklist = sentenceFrame(4);
   const stages = sentenceFrame(8);
 
@@ -41,9 +40,10 @@ export default function S02({ sentenceFrame, wordFrame }: SceneProps) {
           ) : (
             <div style={{ display: "flex", gap: 14 }}>
               {bookings.map((label, index) => {
-                const budget = Math.floor((frame - Math.max(note, names) - index * 8) / 2);
+                const from = note + index * 8;
+                const budget = Math.floor((frame - from) / 2);
                 return (
-                  <div key={label} style={{ opacity: reveal(frame, names + index * 8), padding: "15px 20px",
+                  <div key={label} style={{ opacity: reveal(frame, from), padding: "15px 20px",
                     minWidth: 162, borderRadius: 9, background: theme.wash, color: theme.accent, fontSize: 30, fontWeight: 650 }}>
                     {label.slice(0, Math.max(0, budget))}
                   </div>

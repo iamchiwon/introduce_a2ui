@@ -40,13 +40,13 @@ const fieldBounds = {
 
 export default function S05({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
-  const writing = sentenceFrame(2);
+  const writing = sentenceFrame(1);
   const generated = sentenceFrame(3);
   const fields = sentenceFrame(4);
   const fieldSpan = sentenceFrame(5) - fields;
   const choice = fields;
   const slider = Math.max(fields + Math.round(fieldSpan / 3), wordFrame("슬라이더", 4));
-  const checkBox = Math.max(slider + 1, fields + Math.round(fieldSpan * 2 / 3), wordFrame("체크박스", 4));
+  const checkBox = Math.max(slider + 1, fields + Math.round(fieldSpan * 2 / 3), wordFrame("체크", 4));
   const path = wordFrame("데이터", 5);
   const validation = sentenceFrame(7);
   const action = sentenceFrame(8);

@@ -10,7 +10,7 @@ const minimumIOS = pkg.match(/\.iOS\(\.v(\d+)\)/)?.[1] + ".0";
 export default function S03({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
   const platform = sentenceFrame(1);
-  const swiftUI = wordFrame("SwiftUI", 1);
+  const swiftUI = wordFrame(["스위프트", "SwiftUI"], 1);
   const name = sentenceFrame(2);
   const target = sentenceFrame(3);
   const run = sentenceFrame(4);

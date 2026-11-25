@@ -20,13 +20,12 @@ export function JsonHighlight({
   const first = (target.key ?? target.value).line;
   const last = target.valueEnd.line;
   const start = Math.max(0, first - context);
+  const lines = json.split("\n").slice(start, last + context + 1);
+  const indent = Math.min(...lines.filter((line) => line.trim()).map((line) => line.search(/\S/)));
   return (
     <CodeBlock
       lang="json"
-      code={json
-        .split("\n")
-        .slice(start, last + context + 1)
-        .join("\n")}
+      code={lines.map((line) => line.slice(indent)).join("\n")}
       highlightLines={Array.from(
         { length: last - first + 1 },
         (_, i) => first - start + 1 + i,

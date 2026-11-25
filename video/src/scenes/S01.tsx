@@ -10,11 +10,12 @@ import { Simulator } from "../components/Simulator";
 import { reveal, theme } from "../theme";
 import type { SceneProps } from "../timing";
 
+const { surfaceId } = golf.messages[0].createSurface;
 const actions = [
-  [schema.$defs.CreateSurfaceMessage.required[0], "화면 생성", { surfaceId: "booking", catalogId: catalog.catalogId }],
-  [schema.$defs.UpdateComponentsMessage.required[0], "컴포넌트 갱신", { surfaceId: "booking", components: [{ id: "root", component: "Text", text: golf.name }] }],
-  [schema.$defs.UpdateDataModelMessage.required[0], "데이터 갱신", { surfaceId: "booking", path: "/teeTime", value: ["06:30"] }],
-  [schema.$defs.DeleteSurfaceMessage.required[0], "화면 삭제", { surfaceId: "booking" }],
+  [schema.$defs.CreateSurfaceMessage.required[0], "화면 생성", { surfaceId, catalogId: catalog.catalogId }],
+  [schema.$defs.UpdateComponentsMessage.required[0], "컴포넌트 갱신", { surfaceId, components: [{ id: "root", component: "Text", text: golf.name }] }],
+  [schema.$defs.UpdateDataModelMessage.required[0], "데이터 갱신", { surfaceId, path: "/teeTime", value: ["06:30"] }],
+  [schema.$defs.DeleteSurfaceMessage.required[0], "화면 삭제", { surfaceId }],
 ] as const;
 const examples = ["title", "course", "submit"].map((id) =>
   golf.messages[0].createSurface.components.find((item) => item.id === id)!,
@@ -25,14 +26,14 @@ export default function S01({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
   const versionCue = wordFrame("릴리즈", 1);
   const expand = sentenceFrame(2);
-  const start = sentenceFrame(5);
-  const interval = sentenceFrame(6) - start;
+  const data = wordFrame("데이터", 4);
   const cues = [
-    wordFrame("만들어라", 5),
-    Math.max(start + Math.round(interval * 0.25), wordFrame("컴포넌트를", 5)),
-    Math.max(start + Math.round(interval * 0.50), wordFrame("데이터를", 5)),
-    Math.max(start + Math.round(interval * 0.75), wordFrame("지워라", 5)),
+    wordFrame("만들", 5),
+    wordFrame("컴포넌트", 5),
+    wordFrame("데이터", 5, 1),
+    wordFrame("지워", 5),
   ];
+  const start = cues[0];
   const catalogCue = wordFrame("카탈로그", 7);
   const buttonCue = wordFrame("버튼", 8);
   const renderer = wordFrame("렌더러", 10);
@@ -40,7 +41,7 @@ export default function S01({ sentenceFrame, wordFrame }: SceneProps) {
   const actionCue = cues[actions.indexOf(action)];
 
   return (
-    <AbsoluteFill style={{ padding: "86px 104px", justifyContent: "center" }}>
+    <AbsoluteFill style={{ padding: "86px 104px", justifyContent: frame >= start && frame < catalogCue ? "start" : "center" }}>
       {frame < start ? (
         <div style={{ borderTop: `2px solid ${theme.edge}`, paddingTop: 36 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 22, color: theme.accent, font: `29px ${theme.mono}` }}>
@@ -48,14 +49,18 @@ export default function S01({ sentenceFrame, wordFrame }: SceneProps) {
             <span style={{ opacity: reveal(frame, versionCue), background: theme.wash, borderRadius: 8, padding: "8px 13px" }}>v{version}</span>
           </div>
           <h1 style={{ fontSize: 132, letterSpacing: "-0.055em", margin: "22px 0 5px" }}>A2UI</h1>
-          <div style={{ fontSize: 54, fontWeight: 600, color: theme.muted, opacity: reveal(frame, expand) }}>Agent to User Interface</div>
+          <div style={{ fontSize: 54, fontWeight: 600, color: theme.muted, opacity: reveal(frame, expand) }}>Agent-to-User Interface</div>
+          <div style={{ marginTop: 32, opacity: reveal(frame, data), background: theme.wash, color: theme.accent,
+            width: "fit-content", borderRadius: 8, padding: "12px 18px", fontSize: 32, fontWeight: 650 }}>
+            UI를 정의하는 데이터
+          </div>
         </div>
       ) : frame < catalogCue ? (
         <>
           <h1 style={{ fontSize: 67, margin: "0 0 38px", letterSpacing: "-0.04em" }}>프로토콜 메시지</h1>
-          <section style={{ maxWidth: 1140, minHeight: 465, border: `2px solid ${theme.edge}`, borderRadius: 22, padding: 30, background: theme.canvas }}>
+          <section style={{ maxWidth: 1350, minHeight: 610, border: `2px solid ${theme.edge}`, borderRadius: 22, padding: 30, background: theme.canvas }}>
             <div style={{ color: theme.accent, fontSize: 28, fontWeight: 700, margin: "0 12px 18px" }}>{action[1]}</div>
-            <CodeBlock lang="json" fontSize={28} code={JSON.stringify({ version, [action[0]]: action[2] }, null, 2)}
+            <CodeBlock lang="json" fontSize={26} code={JSON.stringify({ version, [action[0]]: action[2] }, null, 2)}
               highlightLines={[3]} highlightFrom={actionCue} />
           </section>
         </>

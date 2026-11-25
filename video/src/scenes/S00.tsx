@@ -9,7 +9,6 @@ import {
   useDelayRender,
   useVideoConfig,
 } from "remotion";
-import app from "../../../ios/App/App.swift";
 import schedule from "../../../fixtures/schedule.json";
 import golf from "../../../fixtures/golf.json";
 import clinic from "../../../fixtures/clinic.json";
@@ -31,7 +30,6 @@ const screens = [
   { file: "clinic.json", name: clinic.name, screenshot: clinicShot },
   { file: "flight.json", name: flight.name, screenshot: flightShot },
 ];
-const swiftEntry = app.split("\n").find((line) => /struct \w+: App\b/.test(line))?.trim();
 const footage = "s00_tour";
 const footageIndex = "footage/index.json";
 
@@ -62,14 +60,18 @@ export default function S00({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const duration = useTourDuration();
-  const tour = [0, wordFrame("골프", 2), wordFrame("진료", 2), wordFrame("항공권", 2)];
-  const submit = wordFrame("막히", 3);
-  const code = wordFrame("하나", 5);
-  const log = Math.min(code - 1, Math.max(submit + 1, wordFrame("만든", 4)));
+  const footageCues = [
+    0, wordFrame("골프", 2), wordFrame("진료", 2), wordFrame("항공권", 2),
+    wordFrame("막히", 3), wordFrame("만든", 4), wordFrame("하나", 5),
+  ].reduce<number[]>((ordered, cue, index) => {
+    ordered.push(Math.max(cue, (ordered[index - 1] ?? -1) + 1));
+    return ordered;
+  }, []);
+  const [submit, log, code] = footageCues.slice(4);
   const fixtures = wordFrame("전부", 6);
   const focus = sentenceFrame(7);
   const zoom = frame < code ? reveal(frame, submit, 22) : 0;
-  const active = frame >= submit ? 1 : tour.filter((cue) => frame >= cue).length - 1;
+  const active = frame >= submit ? 1 : footageCues.slice(0, 4).filter((cue) => frame >= cue).length - 1;
   const showTree = frame >= code;
   const showFixture = frame >= focus;
   const shot = frame >= log && !showTree ? actionShot : screens[active].screenshot;
@@ -77,7 +79,7 @@ export default function S00({ sentenceFrame, wordFrame }: SceneProps) {
   const sourceFrame = duration
     ? Math.round(interpolate(
         frame,
-        [...tour, submit, log, code],
+        footageCues,
         [0, 1.43, 2.63, 3.93, 5.13, 10.10, duration].map((position) => Math.min(
           position * fps, Math.round(duration * fps) - 1,
         )),
@@ -104,10 +106,8 @@ export default function S00({ sentenceFrame, wordFrame }: SceneProps) {
         </h1>
         {showTree ? (
           <div style={{ border: `2px solid ${theme.edge}`, borderRadius: 22, padding: "24px 28px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: theme.canvas,
-              borderRadius: 8, padding: "15px 20px", font: `25px ${theme.mono}` }}>
-              <span>App.swift</span>
-              <span style={{ fontSize: 21, color: theme.muted }}>{swiftEntry?.replace(/ \{$/, "")}</span>
+            <div style={{ background: theme.canvas, borderRadius: 8, padding: "15px 20px", font: `25px ${theme.mono}` }}>
+              App.swift
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, paddingTop: 18 }}>
               {screens.map(({ file }, index) => (
@@ -124,9 +124,13 @@ export default function S00({ sentenceFrame, wordFrame }: SceneProps) {
             </div> : null}
           </div>
         ) : frame >= submit ? (
-          <div style={{ opacity: reveal(frame, log), padding: 26, background: theme.canvas, borderRadius: 18 }}>
+          <div style={{ minHeight: 300, boxSizing: "border-box", padding: 26, background: theme.canvas, borderRadius: 18 }}>
             <div style={{ color: theme.muted, fontSize: 25, marginBottom: 12 }}>Agent log</div>
-            <CodeBlock lang="json" fontSize={28} code={JSON.stringify({ action: { name: golf.messages[0].createSurface.components.find((part) => part.id === "submit")?.action?.event.name } }, null, 2)} />
+            {frame >= log ? (
+              <CodeBlock lang="json" fontSize={26} code={JSON.stringify({ action: { name: golf.messages[0].createSurface.components.find((part) => part.id === "submit")?.action?.event.name } }, null, 2)} />
+            ) : (
+              <div style={{ color: theme.muted, font: `24px ${theme.mono}` }}>(no actions yet)</div>
+            )}
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>

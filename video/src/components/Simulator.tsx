@@ -20,7 +20,7 @@ export function Simulator({
     <div
       style={{
         height,
-        aspectRatio: "1179/2556",
+        aspectRatio: "1206/2622",
         border: "9px solid " + theme.ink,
         borderRadius: height * 0.055,
         boxSizing: "content-box",

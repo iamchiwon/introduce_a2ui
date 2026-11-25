@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import app from "../../../ios/App/App.swift";
 import golf from "../../../fixtures/golf.json";
 import clinic from "../../../fixtures/clinic.json";
@@ -25,7 +25,10 @@ const snippets = [
   const index = lines.findIndex((line) => line.includes(match));
   const excerpt = lines.slice(index - before, index + after + 1);
   const indent = Math.min(...excerpt.filter((line) => line.trim()).map((line) => line.search(/\S/)));
-  return { label, code: excerpt.map((line) => line.slice(indent)).join("\n"), highlight: before + 1 };
+  const code = excerpt.map((line) => line.slice(indent)).join("\n")
+    .replace(").flatMap", ")\n    .flatMap")
+    .replace(/(var body: some View \{) (A2UISwiftUI\.Surface\(.+\)) \}/, "$1\n  $2\n}");
+  return { label, code, highlight: before + (match.startsWith("A2UISwiftUI.") ? 2 : 1) };
 });
 const inputs = [
   { file: "golf.json", name: golf.name, surfaceId: golf.messages[0].createSurface.surfaceId },
@@ -34,13 +37,16 @@ const inputs = [
 
 export default function S06({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
-  const flow = wordFrame("흐름", 2);
-  const code = sentenceFrame(3);
+  const { fps } = useVideoConfig();
+  const writing = sentenceFrame(1);
+  const hold = 2 * fps;
+  const code = Math.max(sentenceFrame(3), writing + hold + 1);
+  const writingFrames = Math.min(Math.round((code - writing) * 0.65), code - writing - hold);
   const detail = sentenceFrame(4);
   const length = sentenceFrame(5) - detail;
-  const parsing = Math.max(detail + Math.round(length * 0.25), wordFrame("순서대로", 4));
+  const parsing = Math.max(detail + Math.round(length * 0.25), wordFrame("순서", 4));
   const surface = Math.max(parsing + 1, detail + Math.round(length * 0.50), wordFrame("서피스", 4));
-  const listener = Math.max(surface + 1, detail + Math.round(length * 0.75), wordFrame("나가는", 4));
+  const listener = Math.max(surface + 1, detail + Math.round(length * 0.75), wordFrame("나가", 4));
   const sameCode = sentenceFrame(5);
   const swap = sentenceFrame(7);
   const cues = [code, parsing, surface, listener];
@@ -57,10 +63,10 @@ export default function S06({ sentenceFrame, wordFrame }: SceneProps) {
           <div style={{ minHeight: 490, padding: "25px 14px" }}>
             <h1 style={{ fontSize: 46, margin: "0 0 30px 12px" }}>{frame < code ? "JSON 렌더링 요청" : excerpt.label}</h1>
             {frame < code ? (
-              <CodeBlock lang="text" code={prompt} typeFrom={flow}
-                charsPerFrame={prompt.length / Math.max(1, (code - flow) * 0.74)} fontSize={25} />
+              <CodeBlock lang="text" code={prompt} typeFrom={frame < writing + writingFrames ? writing : undefined}
+                charsPerFrame={prompt.length / writingFrames} fontSize={25} />
             ) : (
-              <CodeBlock code={excerpt.code} lang="swift" fontSize={frame >= sameCode ? 18 : 20}
+              <CodeBlock code={excerpt.code} lang="swift" fontSize={24}
                 highlightLines={[excerpt.highlight]} highlightFrom={frame >= sameCode ? sameCode : cues[active]} />
             )}
           </div>
