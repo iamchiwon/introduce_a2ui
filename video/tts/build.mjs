@@ -11,6 +11,7 @@ const audioDir = join(videoDir, 'public/audio');
 const manifestPath = join(audioDir, 'manifest.json');
 const model = 's2.1-pro';
 const timing = { fps: 30, leadInSec: 2, gapSec: 0.8, tailSec: 5 };
+const maxRetries = 3;
 
 function sha256(data) {
   return createHash('sha256').update(data).digest('hex');
@@ -205,6 +206,21 @@ function attachTiming(scene, chunks) {
   return sentences;
 }
 
+export function timingIssues(audioDurationSec, sentences) {
+  const issues = [];
+  const tolerance = 1e-9;
+  const tail = audioDurationSec - sentences.at(-1).words.at(-1).endSec;
+  if (tail > 1.5 + tolerance) issues.push(`마지막 단어 뒤 ${tail.toFixed(3)}초`);
+  for (const [index, { startSec, endSec }] of sentences.entries()) {
+    const duration = endSec - startSec;
+    if (duration < 0.3 - tolerance) issues.push(`${index + 1}번 문장 길이 ${duration.toFixed(3)}초`);
+    if (index === 0) continue;
+    const gap = startSec - sentences[index - 1].endSec;
+    if (gap > 3 + tolerance) issues.push(`${index}~${index + 1}번 문장 사이 ${gap.toFixed(3)}초`);
+  }
+  return issues;
+}
+
 function probeDuration(path) {
   let duration;
   try {
@@ -237,37 +253,54 @@ async function writeJson(path, value) {
   }
 }
 
-async function prepareScene(scene, credentials, generate) {
+async function prepareScene(scene, credentials, generate, force) {
   const audio = `audio/${scene.id}.mp3`;
   const mp3Path = join(videoDir, 'public', audio);
   const cachePath = join(audioDir, `${scene.id}.words.json`);
   const key = sha256(JSON.stringify([scene.ttsText, model, credentials.VOICE_ID]));
-  const stored = await readOptional(cachePath);
-  let cached = stored ? JSON.parse(stored) : undefined;
+  const stored = force ? undefined : await readOptional(cachePath);
+  const cached = stored ? JSON.parse(stored) : undefined;
   const existing = cached?.key === key ? await readOptional(mp3Path) : undefined;
-  let sentences;
-  if (existing && cached.audioHash === sha256(existing)) {
-    console.log(`${scene.id} 캐시 사용`);
-    sentences = attachTiming(scene, cached.chunks);
-  } else {
-    if (!generate) return undefined;
-    console.log(`${scene.id} Fish Audio 요청 중`);
-    const { audio: bytes, chunks } = await synthesize(scene.ttsText, credentials);
-    sentences = attachTiming(scene, chunks);
-    const temporary = `${mp3Path}.${randomUUID()}.tmp`;
+  const hasCache = existing && cached.audioHash === sha256(existing);
+  if (!hasCache && !generate) return undefined;
+
+  const temporary = `${mp3Path}.${randomUUID()}.tmp`;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const fromCache = attempt === 0 && hasCache;
     try {
-      await writeFile(temporary, bytes);
-      cached = { key, audioHash: sha256(bytes), duration: probeDuration(temporary), chunks };
-      await rename(temporary, mp3Path);
-      await writeJson(cachePath, cached);
+      let candidate = cached;
+      if (!fromCache) {
+        const retry = attempt ? ` (재시도 ${attempt}/${maxRetries})` : '';
+        console.log(`${scene.id} Fish Audio 요청 중${retry}`);
+        const { audio: bytes, chunks } = await synthesize(scene.ttsText, credentials);
+        await writeFile(temporary, bytes);
+        candidate = { key, audioHash: sha256(bytes), duration: probeDuration(temporary), chunks };
+      }
+
+      const { duration, chunks } = candidate;
+      const sentences = attachTiming(scene, chunks);
+      const issues = timingIssues(duration, sentences);
+      if (issues.length) {
+        const details = `타이밍 검사 실패 (${issues.join(', ')})`;
+        if (attempt === maxRetries) throw new Error(`${maxRetries}회 재시도 후 ${details}`);
+        console.warn(`${scene.id} ${fromCache ? '캐시 ' : ''}${details}`);
+        if (!generate) return undefined;
+        continue;
+      }
+
+      if (fromCache) {
+        console.log(`${scene.id} 캐시 사용`);
+      } else {
+        await rename(temporary, mp3Path);
+        await writeJson(cachePath, candidate);
+      }
+      const lastWordEnd = sentences.at(-1).words.at(-1).endSec;
+      console.log(`${scene.id} ffprobe ${duration.toFixed(3)}초, 마지막 단어 ${lastWordEnd.toFixed(3)}초, 차이 ${(duration - lastWordEnd).toFixed(3)}초`);
+      return { id: scene.id, title: scene.title, audio, audioDurationSec: duration, sentences };
     } finally {
-      await rm(temporary, { force: true });
+      if (!fromCache) await rm(temporary, { force: true });
     }
   }
-
-  const lastWordEnd = sentences.at(-1).words.at(-1).endSec;
-  console.log(`${scene.id} ffprobe ${cached.duration.toFixed(3)}초, 마지막 단어 ${lastWordEnd.toFixed(3)}초, 차이 ${(cached.duration - lastWordEnd).toFixed(3)}초`);
-  return { id: scene.id, title: scene.title, audio, audioDurationSec: cached.duration, sentences };
 }
 
 async function writeManifest(scenes) {
@@ -289,12 +322,15 @@ async function writeManifest(scenes) {
 async function main() {
   const { values: options } = parseArgs({ options: {
     scene: { type: 'string' },
+    force: { type: 'string' },
     'dry-run': { type: 'boolean' },
     'timeline-only': { type: 'boolean' },
   } });
 
   if (options['timeline-only']) {
-    if (options.scene || options['dry-run']) throw new Error('--timeline-only는 단독으로 실행하세요.');
+    if (options.scene !== undefined || options.force !== undefined || options['dry-run']) {
+      throw new Error('--timeline-only는 단독으로 실행하세요.');
+    }
     const stored = await readOptional(manifestPath);
     const scenes = stored && JSON.parse(stored).scenes;
     if (!scenes?.length) throw new Error('타임라인을 재계산할 manifest가 없습니다.');
@@ -303,8 +339,12 @@ async function main() {
   }
 
   const scenes = await readScenes();
-  const selected = options.scene ? scenes.filter(({ id }) => id === options.scene) : scenes;
-  if (!selected.length) throw new Error(`장면을 찾을 수 없습니다 (${options.scene}).`);
+  if (options.scene !== undefined && options.force !== undefined && options.scene !== options.force) {
+    throw new Error('--scene과 --force를 함께 쓰려면 같은 장면을 지정하세요.');
+  }
+  const sceneId = options.force ?? options.scene;
+  const selected = sceneId === undefined ? scenes : scenes.filter(({ id }) => id === sceneId);
+  if (!selected.length) throw new Error(`장면을 찾을 수 없습니다 (${sceneId}).`);
   if (!checkPronunciation(selected, options['dry-run'])) {
     process.exitCode = 1;
     return;
@@ -322,7 +362,7 @@ async function main() {
     const generate = selected.includes(scene);
     if (!generate && !checkPronunciation([scene], false)) continue;
     try {
-      const entry = await prepareScene(scene, credentials, generate);
+      const entry = await prepareScene(scene, credentials, generate, scene.id === options.force);
       if (entry) ready.push(entry);
     } catch (error) {
       throw new Error(`${scene.id}: ${error.message}`);
@@ -331,7 +371,9 @@ async function main() {
   await writeManifest(ready);
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (import.meta.main ?? (process.argv[1] === import.meta.filename)) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
