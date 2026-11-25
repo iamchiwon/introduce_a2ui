@@ -1,4 +1,6 @@
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, Img } from "remotion";
+// A2UI 로고: vendor/a2ui/docs/assets/A2UI_dark.svg (Apache-2.0)
+import logo from "../../docs/thumbnail/a2ui-logo.svg";
 import { theme } from "./theme";
 
 // "잔머리는 삶의 지혜" 재생목록 썸네일 양식: 파란 상단 띠 + 흰 본문 + 회색 영문 부제
@@ -43,12 +45,12 @@ export function Thumbnail() {
           iOS 서버 드리븐 UI
           <br />
           이제 공짜
-          <span style={{ fontSize: 72, color: theme.accent, marginLeft: 24, letterSpacing: 0 }}>{"{ }"}</span>
         </div>
         <div style={{ marginTop: 24, fontSize: 66, fontWeight: 800, color: "#a3a8ad", letterSpacing: -1.5 }}>
           앱 배포 없이 화면 바꾸기
         </div>
       </div>
+      <Img src={logo} style={{ position: "absolute", right: 70, top: 300, width: 250, height: 250 }} />
       <div style={{ position: "absolute", right: 44, bottom: 30, fontSize: 34, fontWeight: 700, color: "#6b7177", letterSpacing: -0.5 }}>
         feat. A2UI
       </div>
