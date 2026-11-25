@@ -50,7 +50,7 @@ export default function S09({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
   const request = sentenceFrame(1);
   const swift = wordFrame("목록", 2);
-  const tour = sentenceFrame(4);
+  const tour = sentenceFrame(3);
   const enter = sentenceFrame(5);
   const warning = Math.max(enter + 1, wordFrame("경고", 6));
   const declaration = Math.max(warning + 1, wordFrame("정규", 6));
@@ -60,22 +60,24 @@ export default function S09({ sentenceFrame, wordFrame }: SceneProps) {
   const activeTab = Math.min(2, Math.max(0, Math.floor(3 * (frame - generated) / Math.max(1, swift - generated))));
   const typedLength = Math.floor(3 * reveal(frame, request, Math.max(1, generated - request)));
   const hasFootage = getStaticFiles().some(({ name }) => name === `footage/${footage}.mp4`);
-  const typeDigits = enter + Math.round((warning - enter) * 0.42);
-  // Skip the keyboard wait between the tap and the first recorded digit.
+  const typeDigits = enter + Math.round((warning - enter) * 0.43);
+  const closeKeyboard = enter + Math.round((warning - enter) * 0.79);
+  // Trim the waits for the keyboard and after typing.
   const clips = [
     { cue: tour, next: enter, start: 4, end: 178 },
-    { cue: enter, next: typeDigits, start: 178, end: 296 },
-    { cue: typeDigits, next: warning, start: 456, end: 622 },
+    { cue: enter, next: typeDigits, start: 178, end: 270 },
+    { cue: typeDigits, next: closeKeyboard, start: 472, end: 555 },
+    { cue: closeKeyboard, next: warning, start: 596, end: 632 },
   ];
   const tourScreen = Math.min(3, Math.max(0, Math.floor(4 * (frame - tour) / Math.max(1, enter - tour))));
 
   if (frame < tour) {
     return (
-      <AbsoluteFill style={{ padding: "78px 96px", justifyContent: "center" }}>
-        <IdeMock title="A2UIRenderer"
+      <AbsoluteFill style={{ padding: "98px 96px", justifyContent: "flex-start" }}>
+        <IdeMock
           files={["질문", "golf.json", ...(frame >= generated ? specs.map(({ file }) => file) : []), ...(showSwift ? ["App.swift"] : [])]}
           active={showSwift ? "App.swift" : frame >= generated ? specs[activeTab].file : "질문"}>
-          <div style={{ padding: "48px 38px", minHeight: 452 }}>
+          <div style={{ padding: "48px 38px", minHeight: 675 }}>
             <h1 style={{ fontSize: 57, margin: "0 0 35px", letterSpacing: "-0.045em" }}>
               {showSwift ? "세그먼트 목록" : frame >= generated ? "필수 입력 필드" : "예약 화면 세 가지 추가"}
             </h1>
@@ -125,7 +127,7 @@ export default function S09({ sentenceFrame, wordFrame }: SceneProps) {
           </>
         ) : <Simulator screenshot={frame >= enter ? clinicShot : screenShots[tourScreen]} height={874} />}
       </div>
-      <section style={{ flex: 1, minWidth: 0 }}>
+      <section style={{ flex: 1, minWidth: 0, alignSelf: "flex-start", paddingTop: 220, minHeight: 660 }}>
         <div style={{ color: theme.accent, font: `26px ${theme.mono}` }}>{frame < enter ? "App.swift" : "clinic.json"}</div>
         <h1 style={{ fontSize: 71, margin: "18px 0 34px", letterSpacing: "-0.05em" }}>
           {frame < enter ? "네 가지 화면" : "연락처 검증"}

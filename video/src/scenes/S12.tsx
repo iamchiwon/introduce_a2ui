@@ -3,7 +3,6 @@ import schedule from "../../../fixtures/schedule.json";
 import golf from "../../../fixtures/golf.json";
 import clinic from "../../../fixtures/clinic.json";
 import flight from "../../../fixtures/flight.json";
-import app from "../../../ios/App/App.swift";
 import scheduleShot from "../../../ios/screenshots/schedule.png";
 import golfShot from "../../../ios/screenshots/golf.png";
 import clinicShot from "../../../ios/screenshots/clinic.png";
@@ -18,7 +17,6 @@ const screens = [
   { file: "clinic.json", name: clinic.name, shot: clinicShot },
   { file: "flight.json", name: flight.name, shot: flightShot },
 ];
-const entryPoint = app.match(/^struct (\w+): App/m)?.[1];
 
 export default function S12({ sentenceFrame, wordFrame }: SceneProps) {
   const frame = useCurrentFrame();
@@ -27,6 +25,7 @@ export default function S12({ sentenceFrame, wordFrame }: SceneProps) {
   const generated = sentenceFrame(2);
   const grid = sentenceFrame(4);
   const goal = sentenceFrame(6);
+  const decide = wordFrame("무엇", 6);
   const repo = sentenceFrame(8);
 
   if (frame < grid) {
@@ -47,9 +46,9 @@ export default function S12({ sentenceFrame, wordFrame }: SceneProps) {
           </section>
           <section style={{ opacity: reveal(frame, generated), border: `2px solid ${theme.edge}`, borderRadius: 24, padding: 34 }}>
             <h2 style={{ fontSize: 40, margin: "0 0 26px" }}>AI가 만든 것</h2>
-            <div style={{ font: `26px ${theme.mono}`, display: "flex", alignItems: "center", gap: 18,
+            <div style={{ font: `26px ${theme.mono}`,
               background: theme.wash, color: theme.accent, padding: "15px 22px", borderRadius: 12 }}>
-              App.swift <span style={{ fontSize: 21, color: theme.muted }}>{entryPoint}</span>
+              App.swift
             </div>
             <div style={{ margin: "16px 0 0 8px", font: `22px ${theme.mono}`, color: theme.muted }}>fixtures/</div>
             <div style={{ marginTop: 12, marginLeft: 23, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
@@ -66,7 +65,7 @@ export default function S12({ sentenceFrame, wordFrame }: SceneProps) {
   }
 
   return (
-    <AbsoluteFill style={{ padding: "52px 96px 38px", alignItems: "center" }}>
+    <AbsoluteFill style={{ padding: "48px 96px 32px", alignItems: "center" }}>
       <h1 style={{ fontSize: 68, letterSpacing: "-0.05em", margin: "0 0 24px",
         opacity: frame < goal ? reveal(frame, grid, 12) : 1 }}>하나의 렌더러, 네 가지 화면</h1>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 38, width: "100%" }}>
@@ -76,14 +75,16 @@ export default function S12({ sentenceFrame, wordFrame }: SceneProps) {
           return (
             <div key={file} style={{ display: "grid", justifyItems: "center", gap: 16, opacity: progress,
               transform: `translateY(${12 * (1 - progress)}px)` }}>
-              <Simulator screenshot={shot} height={716} />
+              <Simulator screenshot={shot} height={690} />
               <div style={{ fontSize: 29, fontWeight: 700 }}>{name}</div>
             </div>
           );
         })}
       </div>
-      <div style={{ marginTop: 24, font: `28px ${theme.mono}`, color: theme.accent, opacity: reveal(frame, repo, 14) }}>
-        a2ui-project/a2ui
+      <div style={{ marginTop: 20, display: "grid", justifyItems: "center", gap: 12, color: theme.accent }}>
+        <div style={{ opacity: reveal(frame, decide, 14), padding: "8px 18px", borderRadius: 12,
+          background: theme.wash, fontSize: 26, fontWeight: 700 }}>무엇을 어떻게</div>
+        <div style={{ opacity: reveal(frame, repo, 14), font: `28px ${theme.mono}` }}>a2ui-project/a2ui</div>
       </div>
     </AbsoluteFill>
   );

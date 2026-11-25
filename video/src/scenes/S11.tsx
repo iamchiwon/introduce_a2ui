@@ -39,7 +39,7 @@ export default function S11({ sentenceFrame, wordFrame }: SceneProps) {
   const design = wordFrame("디자인", 2);
   const brackets = wordFrame("대괄호", 3);
   const versions = sentenceFrame(4);
-  const apache = sentenceFrame(6);
+  const apache = wordFrame("아파", 6);
   const fork = wordFrame("포크", 7);
   const swapURL = wordFrame("주소", 7);
 
@@ -63,13 +63,15 @@ export default function S11({ sentenceFrame, wordFrame }: SceneProps) {
       ) : frame >= brackets ? (
         <>
           <div style={{ color: theme.accent, font: `26px ${theme.mono}` }}>golf.json</div>
-          <h1 style={{ margin: "16px 0 35px", fontSize: 72, letterSpacing: "-0.05em" }}>배열 값이 요약에 그대로 표시</h1>
+          <h1 style={{ margin: "16px 0 35px", fontSize: 72, letterSpacing: "-0.05em" }}>
+            {frame >= versions ? "프로토콜과 패키지 버전" : "배열 값이 요약에 그대로 표시"}
+          </h1>
           <div style={{ display: "flex", gap: 28, alignItems: "stretch" }}>
             <div style={{ width: 887, border: `2px solid ${theme.edge}`, borderRadius: 20, overflow: "hidden",
               alignSelf: "flex-start" }}>
-              <div style={{ position: "relative", height: 150, overflow: "hidden", background: theme.canvas }}>
-                <Img src={actionShot} style={{ position: "absolute", top: -1130, left: 0, width: "100%" }} />
-                <div style={{ position: "absolute", top: 57, left: 225, width: 130, height: 32, borderRadius: 7,
+              <div style={{ position: "relative", height: 110, overflow: "hidden", background: theme.canvas }}>
+                <Img src={actionShot} style={{ position: "absolute", top: -1123, left: 0, width: "100%" }} />
+                <div style={{ position: "absolute", top: 64, left: 225, width: 130, height: 32, borderRadius: 7,
                   border: `2px solid ${theme.accent}`, opacity: reveal(frame, brackets) }} />
               </div>
               <div style={{ padding: "20px 24px", background: theme.paper }}>
@@ -85,9 +87,6 @@ export default function S11({ sentenceFrame, wordFrame }: SceneProps) {
                     <span>{label}</span><strong style={{ color: theme.accent, fontFamily: theme.mono }}>{value}</strong>
                   </div>
                 ))}
-                <div style={{ fontSize: 23, color: theme.muted, paddingTop: 21 }}>
-                  CLI 빌드에서는 <code>-destination</code>으로 시뮬레이터 지정
-                </div>
               </div>
             ) : null}
           </div>

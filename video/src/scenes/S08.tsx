@@ -27,7 +27,7 @@ export default function S08({ sentenceFrame, wordFrame }: SceneProps) {
   const courseSpan = players - course;
   const summary = Math.min(players - 1, Math.max(course + Math.round(courseSpan * 0.35), wordFrame("요약", 2)));
   const book = sentenceFrame(4);
-  const log = Math.max(wordFrame("golf_submit", 5), wordFrame("서브", 5));
+  const log = wordFrame("서브", 5);
   const flow = sentenceFrame(7);
   const validate = Math.max(flow, wordFrame("검증", 7));
   const action = Math.max(validate, wordFrame("액션", 7));
@@ -53,7 +53,8 @@ export default function S08({ sentenceFrame, wordFrame }: SceneProps) {
     <AbsoluteFill style={{ padding: "70px 96px", flexDirection: "row", alignItems: "center", gap: 112 }}>
       <div style={{ width: 608, height: 940, display: "grid", placeItems: "center", position: "relative",
         flexShrink: 0, background: theme.canvas, borderRadius: 32, overflow: "hidden" }}>
-        <div style={{ transform: `translateY(${-97 * zoom}px) scale(${1 + 0.32 * zoom})`, transformOrigin: "center bottom" }}>
+        <div style={{ transform: zoom ? `translateY(${-97 * zoom}px) scale(${1 + 0.32 * zoom})` : undefined,
+          transformOrigin: "center bottom" }}>
           {hasFootage ? (
             <>
               {clips.map(({ cue, next, start, end }) => next > cue ? (
@@ -80,8 +81,8 @@ export default function S08({ sentenceFrame, wordFrame }: SceneProps) {
           <div style={{ border: `2px solid ${theme.edge}`, borderRadius: 22, padding: "26px 28px",
             opacity: reveal(frame, book) }}>
             <div style={{ font: `25px ${theme.mono}`, color: theme.muted }}>Agent log</div>
-            <div style={{ font: `42px ${theme.mono}`, color: theme.accent, margin: "12px 0 24px" }}>{eventName}</div>
             <div style={{ opacity: reveal(frame, log, 12) }}>
+              <div style={{ font: `42px ${theme.mono}`, color: theme.accent, margin: "12px 0 24px" }}>{eventName}</div>
               <div style={{ marginBottom: 8, font: `24px ${theme.mono}` }}>context</div>
               {hasFootage ? <CodeBlock lang="json" code={context} highlightLines={[4, 5]} highlightFrom={log} fontSize={30} /> : null}
             </div>
