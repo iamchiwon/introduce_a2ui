@@ -1,8 +1,9 @@
 # 유튜브 업로드 정보
 
-- 영상: `video/out/introduce_a2ui.mp4` (8:22)
+- 영상: `video/out/introduce_a2ui.mp4` (8:20)
 - 자막: `video/out/introduce_a2ui.ko.srt` (한국어, 업로드 시 "자막 > 파일 업로드 > 타이밍 포함")
-- 썸네일: [thumbnail/thumbnail.png](thumbnail/thumbnail.png) (1280×720)
+- 재생목록: 잔머리는 삶의 지혜 (Tricks make wisdom)
+- 썸네일: [thumbnail/thumbnail.png](thumbnail/thumbnail.png) (1280×720, 재생목록 양식). 이전 시안은 [thumbnail/alt-generic.png](thumbnail/alt-generic.png)
 
 ## 제목
 
@@ -48,11 +49,11 @@ A2UI 문서: https://a2ui.org
 3:23 바이브코딩 1: 골프 예약 JSON
 4:12 바이브코딩 2: JSON을 그리는 앱 코드
 4:49 빌드하고 고치기
-5:00 동작 확인
-5:38 나머지 화면은 JSON만
-6:05 서버 드리븐 UI로 쓰기
-6:53 한계와 커스텀
-7:39 마무리
+4:59 동작 확인
+5:37 나머지 화면은 JSON만
+6:04 서버 드리븐 UI로 쓰기
+6:52 한계와 커스텀
+7:38 마무리
 
 #A2UI #SwiftUI #iOS개발 #바이브코딩 #서버드리븐UI
 ```

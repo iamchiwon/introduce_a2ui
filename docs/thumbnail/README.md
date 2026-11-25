@@ -1,4 +1,11 @@
-# A2UI 소개 영상 썸네일
+# 썸네일
+
+- `thumbnail.png`: 최종. "잔머리는 삶의 지혜" 재생목록 양식(파란 상단 띠 + 전구, 흰 본문 2줄 제목, 회색 영문 부제). 이미지 모델 없이 `video/src/Thumbnail.tsx`(Remotion, Pretendard)로 그린다.
+- 다시 만들기: `cd video && npx remotion still Thumbnail ../docs/thumbnail/thumbnail.png`
+- `alt-generic.png`: 이전 시안. 배경 `bg.png`는 gpt-image-2.5-flare로 생성(아래 기록).
+
+## 이전 시안 기록
+
 
 - 추천안: `thumbnail.png` (유일한 시안)
 - 배경 이미지 모델: `gpt-image-2.5-flare` (OpenAI Image API, `image_gen.py` CLI)
