@@ -9,3 +9,9 @@ dist/
 ios/build/
 ios/*.xcodeproj/
 xcuserdata/
+
+# video: generated media
+video/public/audio/
+video/public/footage/
+video/out/
+out/
