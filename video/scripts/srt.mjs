@@ -3,25 +3,65 @@ import { join } from 'node:path';
 
 const videoDir = join(import.meta.dirname, '..');
 const maxLineLength = 20;
+const minCueSeconds = 0.7;
 
 function normalize(text) {
   return text.normalize('NFC').replace(/[^\p{L}\p{N}]/gu, '');
 }
 
-function wrap(text) {
+function wrapLines(text, preferCommas = true) {
   const lines = [];
   let remaining = [...text.trim()];
   while (remaining.length > maxLineLength) {
     const window = remaining.slice(0, maxLineLength + 1);
     const comma = window.slice(0, maxLineLength).findLastIndex((character) => /[,，]/u.test(character));
     const space = window.lastIndexOf(' ');
-    const end = comma >= maxLineLength / 2 ? comma + 1 : space > 0 ? space : maxLineLength;
+    const end = preferCommas && comma >= maxLineLength / 2 ? comma + 1 : space > 0 ? space : maxLineLength;
     lines.push(remaining.slice(0, end).join('').trim());
     remaining = [...remaining.slice(end).join('').trimStart()];
   }
   if (remaining.length) lines.push(remaining.join(''));
-  return Array.from({ length: Math.ceil(lines.length / 2) }, (_, index) =>
+  return lines;
+}
+
+function wrap(sentence) {
+  const lines = wrapLines(sentence.text);
+  let cues = Array.from({ length: Math.ceil(lines.length / 2) }, (_, index) =>
     lines.slice(index * 2, index * 2 + 2).join('\n'));
+  let times = cueTimes(sentence, cues);
+  for (let index = 0; index < cues.length && cues.length > 1; index++) {
+    const [start, end] = times[index];
+    const orphan = index === cues.length - 1 && !/\s/u.test(cues[index]);
+    if (!orphan && end - start >= minCueSeconds - 1e-9) continue;
+
+    const pair = Math.max(0, index - 1);
+    const words = cues.slice(pair, pair + 2).join(' ').split(/\s+/u);
+    const merged = wrapLines(words.join(' '), false);
+    if (merged.length <= 2) {
+      cues.splice(pair, 2, merged.join('\n'));
+      times = cueTimes(sentence, cues);
+      index = pair - 1;
+      continue;
+    }
+
+    let best;
+    let bestDifference = Infinity;
+    for (let split = 2; split <= words.length - 2; split++) {
+      const left = wrapLines(words.slice(0, split).join(' '), false);
+      const right = wrapLines(words.slice(split).join(' '), false);
+      if (left.length > 2 || right.length > 2) continue;
+      const candidate = cues.toSpliced(pair, 2, left.join('\n'), right.join('\n'));
+      const candidateTimes = cueTimes(sentence, candidate);
+      const [a, b] = candidateTimes.slice(pair, pair + 2).map(([from, to]) => to - from);
+      const difference = Math.abs(a - b);
+      if (Math.min(a, b) >= minCueSeconds - 1e-9 && difference < bestDifference) {
+        best = { cues: candidate, times: candidateTimes };
+        bestDifference = difference;
+      }
+    }
+    if (best) ({ cues, times } = best);
+  }
+  return { cues, times };
 }
 
 function ttsBoundary(previous, next, tts) {
@@ -94,24 +134,53 @@ function timecode(milliseconds) {
   return `${clock},${String(milliseconds % 1000).padStart(3, '0')}`;
 }
 
+function repairShortCues(entries) {
+  const minimum = minCueSeconds * 1000;
+  for (let index = 0; index < entries.length; index++) {
+    const cue = entries[index];
+    if (cue.end - cue.start >= minimum) continue;
+    for (const leftIndex of [index - 1, index]) {
+      if (leftIndex < 0 || leftIndex + 1 >= entries.length) continue;
+      const [left, right] = entries.slice(leftIndex, leftIndex + 2);
+      const span = right.end - left.start;
+      if (span < minimum) continue;
+      const lines = wrapLines(`${left.text} ${right.text}`.replaceAll('\n', ' '), false);
+      if (lines.length <= 2) {
+        entries.splice(leftIndex, 2, { start: left.start, end: right.end, text: lines.join('\n') });
+        index = leftIndex;
+        break;
+      }
+      if (span >= 2 * minimum) {
+        left.end = right.start = left.start + Math.floor(span / 2);
+        break;
+      }
+    }
+    if (entries.includes(cue) && cue.end - cue.start < minimum) {
+      throw new Error(`0.7초 이상으로 배치할 수 없는 자막이 있습니다 (${timecode(cue.start)}).`);
+    }
+  }
+}
+
 async function main() {
   const manifest = JSON.parse(await readFile(join(videoDir, 'public/audio/manifest.json'), 'utf8'));
-  const blocks = [];
+  const entries = [];
   let lastEnd = 0;
   for (const scene of manifest.scenes) {
     for (const sentence of scene.sentences) {
-      const cues = wrap(sentence.text);
-      const times = cueTimes(sentence, cues);
+      const { cues, times } = wrap(sentence);
       for (const [index, cue] of cues.entries()) {
         const [start, end] = times[index].map((relative) => Math.round((scene.audioStartSec + relative) * 1000));
         const startMillis = Math.max(lastEnd, start);
         const endMillis = Math.max(startMillis + 1, end);
-        blocks.push(`${blocks.length + 1}\n${timecode(startMillis)} --> ${timecode(endMillis)}\n${cue}`);
+        entries.push({ start: startMillis, end: endMillis, text: cue });
         lastEnd = endMillis;
       }
     }
   }
-  if (!blocks.length) throw new Error('manifest에 자막을 생성할 문장이 없습니다.');
+  if (!entries.length) throw new Error('manifest에 자막을 생성할 문장이 없습니다.');
+  repairShortCues(entries);
+  const blocks = entries.map(({ start, end, text }, index) =>
+    `${index + 1}\n${timecode(start)} --> ${timecode(end)}\n${text}`);
   const outDir = join(videoDir, 'out');
   await mkdir(outDir, { recursive: true });
   await writeFile(join(outDir, 'introduce_a2ui.ko.srt'), `${blocks.join('\n\n')}\n`);

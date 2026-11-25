@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -10,7 +10,7 @@ const rootDir = join(videoDir, '..');
 const audioDir = join(videoDir, 'public/audio');
 const manifestPath = join(audioDir, 'manifest.json');
 const model = 's2.1-pro';
-const timing = { fps: 30, leadInSec: 2, gapSec: 0.8, tailSec: 5 };
+const timing = { fps: 30, leadInSec: 2, gapSec: 0.6, tailSec: 5 };
 const maxRetries = 3;
 
 function sha256(data) {
@@ -209,14 +209,23 @@ function attachTiming(scene, chunks) {
 export function timingIssues(audioDurationSec, sentences) {
   const issues = [];
   const tolerance = 1e-9;
-  const tail = audioDurationSec - sentences.at(-1).words.at(-1).endSec;
+  const spoken = sentences.map(({ words }) => words.filter(({ startSec, endSec }) => endSec > startSec));
+  const lastWord = spoken.findLast((words) => words.length)?.at(-1);
+  const tail = audioDurationSec - (lastWord?.endSec ?? 0);
   if (tail > 1.5 + tolerance) issues.push(`마지막 단어 뒤 ${tail.toFixed(3)}초`);
-  for (const [index, { startSec, endSec }] of sentences.entries()) {
+  let previousEnd;
+  for (const [index, words] of spoken.entries()) {
+    const startSec = words[0]?.startSec ?? sentences[index].startSec;
+    const endSec = words.at(-1)?.endSec ?? startSec;
     const duration = endSec - startSec;
     if (duration < 0.3 - tolerance) issues.push(`${index + 1}번 문장 길이 ${duration.toFixed(3)}초`);
-    if (index === 0) continue;
-    const gap = startSec - sentences[index - 1].endSec;
+    const syllables = words.reduce((count, { text }) => count + (text?.match(/[가-힣]/g)?.length ?? 0), 0);
+    if (duration > 0 && syllables / duration > 9.5 + tolerance) {
+      issues.push(`${index + 1}번 문장 초당 ${(syllables / duration).toFixed(2)}음절`);
+    }
+    const gap = startSec - (previousEnd ?? startSec);
     if (gap > 3 + tolerance) issues.push(`${index}~${index + 1}번 문장 사이 ${gap.toFixed(3)}초`);
+    previousEnd = endSec;
   }
   return issues;
 }
@@ -232,6 +241,18 @@ function probeDuration(path) {
   }
   if (!Number.isFinite(duration) || duration <= 0) throw new Error('MP3 길이가 올바르지 않습니다.');
   return duration;
+}
+
+function probeLeadSilence(path, id) {
+  const { status, stderr } = spawnSync('ffmpeg', [
+    '-hide_banner', '-nostats', '-i', path, '-vn',
+    '-af', 'silencedetect=noise=-45dB:d=0.01', '-f', 'null', '-',
+  ], { encoding: 'utf8', stdio: ['ignore', 'ignore', 'pipe'] });
+  if (status !== 0) throw new Error(`${id}: ffmpeg로 MP3 앞 무음을 측정할 수 없습니다.`);
+  const start = stderr.match(/silence_start:\s*(\S+)/)?.[1];
+  return start !== undefined && Number(start) === 0
+    ? Number(stderr.match(/silence_end:\s*(\S+)/)?.[1] ?? 0)
+    : 0;
 }
 
 async function readOptional(path) {
@@ -306,14 +327,15 @@ async function prepareScene(scene, credentials, generate, force) {
 async function writeManifest(scenes) {
   const storyboardFile = await readOptional(join(videoDir, 'storyboard.json'));
   const storyboard = storyboardFile ? JSON.parse(storyboardFile).scenes : undefined;
-  let nextStart = 0;
+  let nextSpeechStart = timing.leadInSec;
   for (const [index, scene] of scenes.entries()) {
-    scene.visualStartSec = nextStart;
-    scene.audioStartSec = index === 0 ? timing.leadInSec : nextStart;
+    scene.leadSilenceSec = probeLeadSilence(join(videoDir, 'public', scene.audio), scene.id);
+    scene.visualStartSec = index === 0 ? 0 : nextSpeechStart;
+    scene.audioStartSec = nextSpeechStart - scene.leadSilenceSec;
     const audioEnd = scene.audioStartSec + scene.audioDurationSec;
     const minSec = storyboard?.[scene.id]?.minSec ?? 0;
-    nextStart = Math.max(audioEnd + timing.gapSec, scene.visualStartSec + minSec);
-    scene.visualEndSec = index === scenes.length - 1 ? audioEnd + timing.tailSec : nextStart;
+    nextSpeechStart = Math.max(audioEnd + timing.gapSec, scene.visualStartSec + minSec);
+    scene.visualEndSec = index === scenes.length - 1 ? audioEnd + timing.tailSec : nextSpeechStart;
   }
   await writeJson(manifestPath, { model, ...timing, totalSec: scenes.at(-1).visualEndSec, scenes });
   console.log(`video/public/audio/manifest.json (${scenes.length}개 장면)`);
