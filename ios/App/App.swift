@@ -39,7 +39,9 @@ final class Model {
     self.processor = processor
     do {
       let url = Bundle.main.url(forResource: "fixtures/\(selected)", withExtension: "json")!
-      let root = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! [String: Any]
+      let clinicOverride = selected == "clinic" ? ProcessInfo.processInfo.environment["A2UI_CLINIC_FIXTURE"] : nil
+      let fixture = try clinicOverride.map { Data($0.utf8) } ?? Data(contentsOf: url)
+      let root = try JSONSerialization.jsonObject(with: fixture) as! [String: Any]
       for raw in root["messages"] as! [Any] {
         let data = try JSONSerialization.data(withJSONObject: raw)
         processor.process(message: try MessageParser().decode(jsonData: data))
