@@ -4,12 +4,15 @@ import XCTest
 final class FootageTests: XCTestCase {
   func testTour() throws {
     let app = try launch("schedule")
-    select("golf", in: app)
-    select("clinic", in: app)
-    select("flight", in: app)
+    screenshotMarker("schedule")
+    for screen in ["golf", "clinic", "flight"] {
+      select(screen, in: app)
+      screenshotMarker(screen)
+    }
     select("golf", in: app)
     fillGolf(in: app)
     submitGolf(in: app)
+    screenshotMarker("golf_action")
     finish()
   }
 
@@ -143,6 +146,10 @@ final class FootageTests: XCTestCase {
     let submit = app.buttons[variant == nil ? "예약 신청" : "진료 예약하기"]
     XCTAssertTrue(submit.isHittable)
     finish()
+  }
+
+  private func screenshotMarker(_ name: String) {
+    XCTContext.runActivity(named: "Screenshot \(name)") { _ in }
   }
 
   private func finish() {

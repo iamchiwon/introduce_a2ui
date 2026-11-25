@@ -2,7 +2,8 @@
 # Run from any directory. Set SIM to select a particular iPhone 16 Pro UDID.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-exec python3 - <<'PY'
+exec python3 - "$@" <<'PY'
+import argparse
 import json
 import os
 from pathlib import Path
@@ -22,13 +23,12 @@ def read_json(*command):
     return json.loads(subprocess.check_output(command))
 
 
-def trim_markers(result, test):
+def activity_times(result, test):
     activities = read_json(
         "xcrun", "xcresulttool", "get", "test-results", "activities",
         "--path", result, "--test-id", f"FootageTests/{test}()",
     )["testRuns"][0]["activities"]
-    markers = {activity["title"]: activity["startTime"] for activity in activities}
-    return markers["Footage start"], markers["Footage end"]
+    return {activity["title"]: activity["startTime"] for activity in activities}
 
 
 def record(device, video, test_command):
@@ -65,7 +65,53 @@ def record(device, video, test_command):
             raise RuntimeError(f"simctl recordVideo exited {process.returncode}")
 
 
+def record_test(udid, build, raw, result, test):
+    try:
+        started = record(udid, raw, (
+            "xcodebuild", "test-without-building", *build,
+            f"-only-testing:A2UIRendererUITests/FootageTests/{test}",
+            "-resultBundlePath", result, "-collect-test-diagnostics", "never", "-quiet",
+        ))
+    except subprocess.CalledProcessError:
+        if result.exists():
+            subprocess.run(("xcrun", "xcresulttool", "get", "test-results", "summary", "--path", result))
+        raise
+    return started, activity_times(result, test)
+
+
+def capture_screenshots(udid, build):
+    names = ("schedule", "golf", "clinic", "flight", "golf_action")
+    output = Path("ios/screenshots")
+    with tempfile.TemporaryDirectory(prefix="a2ui-screenshots-") as directory:
+        temp = Path(directory)
+        raw = temp / "tour.mov"
+        started, markers = record_test(udid, build, raw, temp / "tour.xcresult", "testTour")
+        for name in names:
+            offset = markers[f"Screenshot {name}"] - started
+            screenshot = temp / f"{name}.png"
+            # Extract from the same capture path as the footage so the Dynamic Island matches.
+            run(
+                "ffmpeg", "-hide_banner", "-loglevel", "error", "-i", raw,
+                "-vf", f"fps=30,tpad=stop_mode=clone:stop_duration=2,select=gte(t\\,{offset:.3f})",
+                "-frames:v", "1", "-update", "1", screenshot,
+            )
+            stream = read_json(
+                "ffprobe", "-v", "error", "-show_entries", "stream=width,height", "-of", "json", screenshot,
+            )["streams"][0]
+            if (stream["width"], stream["height"]) != (1206, 2622):
+                raise RuntimeError(f"Unexpected screenshot dimensions for {name}: {stream}")
+
+        output.mkdir(parents=True, exist_ok=True)
+        for name in names:
+            shutil.copyfile(temp / f"{name}.png", output / f"{name}.png")
+    print(output)
+
+
 def main():
+    parser = argparse.ArgumentParser(prog="footage.sh", description="Capture A2UI on an iPhone 16 Pro simulator.")
+    parser.add_argument("--screenshots", action="store_true", help="regenerate the five PNGs in ios/screenshots")
+    args = parser.parse_args()
+
     devices = read_json("xcrun", "simctl", "list", "devices", "available", "--json")["devices"]
     candidates = [
         device for runtime in devices.values() for device in runtime
@@ -95,6 +141,9 @@ def main():
         "-derivedDataPath", "ios/build/dd", "-parallel-testing-enabled", "NO",
     )
     run("xcodebuild", "build-for-testing", *build, "-quiet")
+    if args.screenshots:
+        capture_screenshots(udid, build)
+        return
 
     clips = {
         "s00_tour": ("testTour", "일정·골프·진료·항공권 전환 후 골프 예약 제출"),
@@ -111,17 +160,8 @@ def main():
             print(f"Recording {name} on {udid}", flush=True)
             raw = temp / f"{name}.mov"
             result = temp / f"{name}.xcresult"
-            try:
-                started = record(udid, raw, (
-                    "xcodebuild", "test-without-building", *build,
-                    f"-only-testing:A2UIRendererUITests/FootageTests/{test}",
-                    "-resultBundlePath", result, "-collect-test-diagnostics", "never", "-quiet",
-                ))
-            except subprocess.CalledProcessError:
-                if result.exists():
-                    subprocess.run(("xcrun", "xcresulttool", "get", "test-results", "summary", "--path", result))
-                raise
-            begin, end = trim_markers(result, test)
+            started, markers = record_test(udid, build, raw, result, test)
+            begin, end = markers["Footage start"], markers["Footage end"]
             offset = begin - started
             duration = end - begin
             if offset < 0 or not 3 <= duration <= 25:
