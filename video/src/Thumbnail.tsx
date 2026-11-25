@@ -50,9 +50,10 @@ export function Thumbnail() {
           앱 배포 없이 화면 바꾸기
         </div>
       </div>
-      <Img src={logo} style={{ position: "absolute", right: 70, top: 300, width: 250, height: 250 }} />
-      <div style={{ position: "absolute", right: 44, bottom: 30, fontSize: 34, fontWeight: 700, color: "#6b7177", letterSpacing: -0.5 }}>
-        feat. A2UI
+      {/* 오른쪽 아래는 유튜브 재생시간 표시에 가려지므로 로고 밑에 둔다 */}
+      <div style={{ position: "absolute", right: 70, top: 290, width: 250, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <Img src={logo} style={{ width: 250, height: 250 }} />
+        <div style={{ marginTop: 4, fontSize: 38, fontWeight: 700, color: "#6b7177", letterSpacing: -0.5 }}>feat. A2UI</div>
       </div>
     </AbsoluteFill>
   );
