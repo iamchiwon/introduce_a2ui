@@ -1,7 +1,9 @@
 # 소개 영상 제작 계획 (모션그래픽 + Fish Audio)
 
 - 입력: [scenario.md](scenario.md)(S0~S12), [narration.md](narration.md)
-- 출력: 1920×1080, 30fps, 15~20분 MP4. 내레이션은 Fish Audio TTS로 만든다.
+- 출력: 1920×1080, 30fps, 15~20분 MP4 + 유튜브 업로드용 자막 파일(SRT). 내레이션은 Fish Audio TTS(`s2.1-pro`)로 만든다.
+- 화면 톤: 화이트(라이트). 영상 안에 자막은 넣지 않는다. BGM, 인트로, 아웃트로는 없다.
+- 시작과 끝: 영상은 첫 장면으로 바로 시작하고 음성은 2초 뒤에 시작한다. 마지막 음성이 끝난 뒤 5초 동안 마지막 화면을 유지하고 끝낸다.
 - 방식: 영상을 코드로 만든다. 화면은 모션그래픽과, 시뮬레이터에서 자동으로 녹화한 실제 앱 화면을 섞는다.
 
 ## 1. 검토 결과
@@ -10,7 +12,8 @@
 |---|---|---|---|
 | 1 | 시나리오 전제가 바뀜 | scenario.md는 "Xcode 라이브코딩 화면 녹화"를 전제로 썼다. 모션그래픽 영상에는 사람이 녹화한 화면이 없다. | Xcode 화면(새 프로젝트, 패키지 추가, AI 프롬프트, 코드)은 **모션그래픽 목업**으로 재현한다. 앱 동작 장면은 **시뮬레이터 자동 녹화**(XCUITest + `simctl io recordVideo`)로 만든 실제 영상을 쓴다. 시나리오의 "화면" 항목을 장면별 스토리보드로 다시 쓴다(W1). |
 | 2 | 도구 | 코드 기반 모션그래픽 도구가 필요하다. | **Remotion 4**(React/TS, 현재 4.0.547)를 쓴다. 기존 React 코드와 같은 스택이고, 오디오 길이에 맞춰 장면 길이를 정할 수 있고, CLI로 렌더링된다. Remotion은 개인과 3인 이하 회사는 무료, 그 외는 회사 라이선스가 필요하다(**확인 필요**). 안 되면 Motion Canvas(MIT)를 쓴다. |
-| 3 | 싱크 | 내레이션과 화면은 장면 단위로만 맞추면 된다. | 장면마다 TTS를 따로 만들고, 장면 길이 = max(음성 길이 + 여백, 화면 최소 길이)로 정한다. 장면 안의 강조 타이밍은 Fish Audio `/v1/tts/stream/with-timestamp`의 단어 타임스탬프로 맞추고, 자막도 같은 데이터로 만든다. |
+| 3 | 싱크 | 내레이션과 화면은 장면 단위로만 맞추면 된다. | 장면마다 TTS를 따로 만들고, 장면 길이 = max(음성 길이 + 여백, 화면 최소 길이)로 정한다. 장면 안의 강조 타이밍은 Fish Audio `/v1/tts/stream/with-timestamp`의 단어 타임스탬프로 맞춘다. |
+| 3-1 | 자막 | 영상에 굽지 않고 유튜브에 올릴 SRT 파일로 만든다. TTS 텍스트는 한국어 발음("에이투유아이")이라 그대로 쓰면 안 된다. | 자막 문구는 **narration.md 원문**("A2UI")을 쓴다. 문장 단위로 나눠 TTS를 만들고(사전은 용어만 바꾸므로 문장 경계가 같다), 각 문장의 시작·끝 시간을 타임스탬프에서 가져온다. 시간에는 앞 2초와 장면 시작 오프셋을 더한다. 한 자막은 2줄, 줄당 약 20자 이하로 자른다. |
 | 4 | 발음 | 영문 용어·숫자는 TTS가 영어식으로 읽거나 잘못 읽는다. | 용어는 **실제 개발자들이 부르는 한국어 발음**으로 적는다(예: A2UI → 에이투유아이, SwiftUI → 스위프트 유아이, JSON → 제이슨, Xcode → 엑스코드). narration.md는 그대로 두고, 발음 사전 [`video/tts/pronunciation.json`](../video/tts/pronunciation.json)으로 TTS용 텍스트만 바꾼다. 적용 후 영문자·숫자가 남으면 TTS 생성을 실패시킨다. 처음 생성한 음성을 사람이 듣고 사전을 고친다. |
 | 5 | 비밀값 | `.env`(FISH_AUDIO_API_KEY, VOICE_ID)가 git 제외 대상에 없었다. | `.gitignore`에 `.env`를 추가했다. 키는 TTS 스크립트(Node)에서만 읽고, Remotion 번들이나 작업 지시서·로그에는 넣지 않는다. |
 | 6 | 소스 재사용 | 코드와 JSON 화면이 이미 있다. | `ios/App/App.swift`, `fixtures/*.json`을 그대로 import해 코드 하이라이트(shiki)로 보여준다. 스크린샷은 `ios/screenshots/`를 쓴다. |
@@ -20,11 +23,11 @@
 ## 2. 결정 필요 (사용자)
 
 - [ ] Remotion 라이선스 조건 확인 (개인 채널이면 무료)
-- [ ] 화면 톤: 다크 / 라이트
-- [ ] 자막 넣기 여부 (기본: 넣음)
-- [ ] BGM 사용 여부, 사용하면 음원 파일
-- [ ] Fish Audio 모델: `s2.1-pro`(기본) / `s1`
-- [ ] 채널 인트로·아웃트로 소스가 있는지
+- [x] 화면 톤: 화이트
+- [x] 자막: 영상에 넣지 않음, SRT 파일로 저장해 유튜브 자막으로 올림
+- [x] BGM: 없음
+- [x] Fish Audio 모델: `s2.1-pro` (요청 헤더 `model: s2.1-pro`)
+- [x] 인트로·아웃트로: 없음. 음성 시작 전 2초, 마지막 음성 뒤 5초 여백
 
 ## 3. 폴더 구조 (예정)
 
@@ -32,15 +35,16 @@
 video/
   package.json            # remotion, @remotion/cli, shiki
   src/
-    Root.tsx              # Composition 등록, calculateMetadata로 장면 길이 계산
+    Root.tsx              # Composition 등록, calculateMetadata로 장면 길이 계산 (앞 2초 + 장면들 + 뒤 5초)
     theme.ts              # 색·폰트·간격
-    components/           # IdeMock, CodeBlock, JsonHighlight, Simulator, Diagram, Caption, Title
+    components/           # IdeMock, CodeBlock, JsonHighlight, Simulator, Diagram, Title
     scenes/S00.tsx ~ S12.tsx
   tts/
     pronunciation.json    # 발음 사전 (작성 완료, 대본 수정 시 함께 갱신)
     build.mjs             # narration.md → 장면별 TTS → public/audio
   public/
     audio/Sxx.mp3, Sxx.words.json, manifest.json   # 생성물 (git 제외)
+  scripts/srt.mjs         # manifest + narration.md 원문 → out/introduce_a2ui.ko.srt
     footage/*.mp4                                  # 시뮬레이터 녹화 (git 제외)
   out/                                             # 렌더 결과 (git 제외)
 docs/storyboard.md        # 장면별 화면 비트, 사용 소스, 최소 길이
@@ -53,12 +57,12 @@ docs/storyboard.md        # 장면별 화면 비트, 사용 소스, 최소 길�
 | ID | 업무 | 담당 (agent / model / effort) | 입력 | 산출물 / 완료 조건 |
 |---|---|---|---|---|
 | C | 총괄: 결정 반영, 작업 지시, 통합, 발음 청취 검수, 최종 렌더 | 코디네이터 (claude / opus-5.5) | 이 계획 | 각 단계 승인, 최종 MP4 |
-| W1 | 스토리보드와 디자인 시스템 설계 | codex / gpt-6.2-astra / high (design) | scenario.md, narration.md, ios/, fixtures/ | `docs/storyboard.md`(장면별 비트·소스·최소 길이·강조 단어), `video/` 뼈대(Root, theme, 공용 컴포넌트 인터페이스). `npx remotion studio` 실행 확인 |
-| W2 | TTS 파이프라인 | codex / gpt-6.2-sol / medium (backend) | narration.md, .env | `video/tts/build.mjs`: 장면 분리 → 발음 사전 적용(영문·숫자 잔존 시 실패) → with-timestamp 호출 → mp3와 단어 타임스탬프, `manifest.json`(장면별 길이). 텍스트 해시 캐시로 바뀐 장면만 다시 생성. S0 한 장면 샘플 생성 |
+| W1 | 스토리보드와 디자인 시스템 설계 | codex / gpt-6.2-astra / high (design) | scenario.md, narration.md, ios/, fixtures/ | `docs/storyboard.md`(장면별 비트·소스·최소 길이·강조 단어), `video/` 뼈대(Root, 화이트 톤 theme, 공용 컴포넌트 인터페이스, 앞 2초·뒤 5초 여백). `npx remotion studio` 실행 확인 |
+| W2 | TTS 파이프라인 | codex / gpt-6.2-sol / medium (backend) | narration.md, .env | `video/tts/build.mjs`: 장면·문장 분리 → 발음 사전 적용(영문·숫자 잔존 시 실패) → `s2.1-pro`로 with-timestamp 호출 → mp3와 단어 타임스탬프, `manifest.json`(장면별 길이, 문장별 원문·시작·끝). 텍스트 해시 캐시로 바뀐 장면만 다시 생성. `video/scripts/srt.mjs`로 SRT 생성. S0 한 장면 샘플 생성 |
 | W3 | 시뮬레이터 실사 녹화 | codex / gpt-6.2-sol / medium (general) | ios/, fixtures/ | XCUITest 시나리오 + `simctl io recordVideo`로 `video/public/footage/`에 S0(4화면 전환·골프 제출), S8(골프 조작), S9(4화면·진료 정규식 경고), S10(안과 추가 전후). 녹화 스크립트 `video/footage.sh` |
 | W4a | 장면 구현 S0~S6 | codex / gpt-6.2-sol / medium (general) | storyboard, W1 뼈대, W2 manifest | `scenes/S00~S06.tsx`. 장면별 still 렌더 확인 |
 | W4b | 장면 구현 S7~S12 | codex / gpt-6.2-sol / medium (general) | storyboard, W1 뼈대, W2 manifest, W3 footage | `scenes/S07~S12.tsx`. 장면별 still 렌더 확인 |
-| W5 | 썸네일·타이틀 카드 이미지 (선택) | codex / gpt-6.1-terra / medium (image, gpt-image-2.5-flare) | 영상 톤 | `video/public/images/` 썸네일 1장, 타이틀 배경 |
+| W5 | 유튜브 썸네일 이미지 (선택, 영상에는 넣지 않음) | codex / gpt-6.1-terra / medium (image, gpt-image-2.5-flare) | 영상 톤 | `video/public/images/thumbnail.png` 1장 |
 | R1 | 리뷰: 코드 + 장면별 still 샘플 + 싱크 | claude / claude-fable-5-2 / high (review-codex) | W1~W4 결과 | 이슈 목록 → 해당 워커에 수정 지시 |
 
 ## 5. 진행 순서
@@ -80,6 +84,8 @@ P4  C: 전체 렌더 → 사용자 검수 → 내레이션 수정이 있으면 W
 - [ ] `npx remotion render`로 최종 MP4 생성, 길이 15~20분
 - [ ] 13개 장면 모두 음성이 잘리지 않고, 장면 사이 무음은 1초 이하
 - [ ] 발음 사전 적용 후 영문 용어 오독 없음 (사용자 청취 확인)
-- [ ] 자막이 단어 타임스탬프와 맞음
+- [ ] 첫 음성이 2.0초(±0.1초)에 시작, 마지막 음성 종료 후 5초 뒤 영상 종료
+- [ ] 영상 화면에 자막 없음
+- [ ] `out/introduce_a2ui.ko.srt`: 원문 용어(A2UI 등) 표기, 앞 2초 오프셋 반영, 유튜브 자막 업로드에서 오류 없음
 - [ ] `.env` 값이 커밋·로그·번들에 없음 (`git grep`, 번들 검색으로 확인)
 - [ ] 생성물(audio, footage, out)은 git 제외, 다시 만드는 스크립트는 커밋
